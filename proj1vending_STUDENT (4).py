@@ -1,6 +1,6 @@
 # Dylan Brett (100933134)
 # TPRG-2131-02
-# Nov 10, 2024
+# Nov 12, 2024
 # This program is strictly my own work. Any material
 # beyond course learning materials that is taken from
 # the Web or other sources is properly cited, giving
@@ -55,16 +55,22 @@ def log(s):
 
 
 class VendingMachine(object):
-    
+
+    # a list of my products to be used in the layout in the main program
     PRODUCTS = {"suprise($0.05)": ("SURPRISE", 5),
-                "chocolate($0.75)": ("chocolate", 75)
-                
+                "chocolate($0.75)": ("chocolate", 75),
+                "chips($1)": ("chips", 100),
+                "cookie($1.25)": ("cookie", 125),
+                "pop($1.50)": ("pop", 150)
+
                 }
 
     # List of coins: each tuple is ("VALUE", value in cents)
-    COINS = {"5": ("5 cents", 5)
-             
-
+    COINS = {"$0.05": ("5", 5),
+             "$0.10": ("10", 10),
+             "$0.25": ("25", 25),
+             "$1": ("100", 100),
+             "$2": ("200", 200)
 
             }
 
@@ -220,8 +226,8 @@ if __name__ == "__main__":
     vending.go_to_state('waiting')
 
    # Checks if being used on Pi
-    #if hardware_present:
-        # Set up the hardware button callback (do not use () after function!) # I have commented this out for now to get the program to run
+    #if hardware_present: # I will keep this commented out until I work on the PI
+        # Set up the hardware button callback (do not use () after function!) 
         #key1.when_pressed = vending.button_action
 
     # The Event Loop: begin continuous processing of events
@@ -238,6 +244,9 @@ if __name__ == "__main__":
             break
         vending.event = event
         vending.update()
+
+    window.close()
+    print("Normal exit")
 
     window.close()
     print("Normal exit")
