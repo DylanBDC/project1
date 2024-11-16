@@ -1,8 +1,11 @@
-#!/usr/bin/env python3
-
-# STUDENT version for Project 1.
-# TPRG2131 Fall 202x
-# Updated Phil J (Fall 202x)
+# Dylan Brett (100933134)
+# TPRG-2131-02
+# Nov 10, 2024
+# This program is strictly my own work. Any material
+# beyond course learning materials that is taken from
+# the Web or other sources is properly cited, giving
+# credit to the original author(s). I havent used any
+# code from other sources other than referncing the course material
 # 
 # Louis Bertrand
 # Oct 4, 2021 - initial version
@@ -48,14 +51,20 @@ def log(s):
 # that "belongs to" the state machine. In this case, the information
 # is the products and prices, and the coins inserted and change due.
 # For testing purposes, output is to stdout, also ensure use of Docstring, in class
+
+
+
 class VendingMachine(object):
     
-    PRODUCTS = {"suprise": ("SURPRISE", 5),
-
+    PRODUCTS = {"suprise($0.05)": ("SURPRISE", 5),
+                "chocolate($0.75)": ("chocolate", 75)
+                
                 }
 
     # List of coins: each tuple is ("VALUE", value in cents)
-    COINS = {"5": ("5", 5),
+    COINS = {"5": ("5 cents", 5)
+             
+
 
             }
 
@@ -211,9 +220,9 @@ if __name__ == "__main__":
     vending.go_to_state('waiting')
 
    # Checks if being used on Pi
-    if hardware_present:
-        # Set up the hardware button callback (do not use () after function!)
-        key1.when_pressed = vending.button_action
+    #if hardware_present:
+        # Set up the hardware button callback (do not use () after function!) # I have commented this out for now to get the program to run
+        #key1.when_pressed = vending.button_action
 
     # The Event Loop: begin continuous processing of events
     # The window.read() function reads events and values from the GUI.
