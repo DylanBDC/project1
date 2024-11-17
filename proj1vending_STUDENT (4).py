@@ -30,12 +30,18 @@ import PySimpleGUI as sg
 
 #Where am I?
 hardware_present = False
-try:
-    #*** define the pin you used
-    hardware_present = True
-except ModuleNotFoundError:
-    print("Not on a Raspberry Pi or gpiozero not installed.")
-
+answer = input('is  this on a RPi? ') # temporary method while I figure something else out (gpiozero won't let the program run without the PI)
+if answer == 'yes':
+    try:
+        from gpiozero import Button, Servo
+        servo = Servo(17)
+        key1 = Button(5)
+        hardware_present = True
+    except ModuleNotFoundError:
+        print("Not on a Raspberry Pi or gpiozero not installed.")
+else:
+    print('do nothing') # added for testing purposes
+    
 # Setting this constant to True enables the logging function
 # Set it to False for normal operation
 TESTING = True
@@ -162,7 +168,14 @@ class DeliverProductState(State):
         # Deliver the product and change state
         machine.change_due = machine.amount - machine.PRODUCTS[machine.event][1]
         machine.amount = 0
+        
         print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
+        
+        if answer == 'yes':
+            servo.value = 1
+            time.sleep(10)
+            servo.value = -1
+        
         if machine.change_due > 0:
             machine.go_to_state('count_change')
         else:
@@ -193,7 +206,7 @@ if __name__ == "__main__":
     coin_col = []
     coin_col.append([sg.Text("ENTER COINS", font=("Helvetica", 24))])
     for item in VendingMachine.COINS:
-        log(item)
+        #log(item)
         button = sg.Button(item, font=("Helvetica", 18))
         row = [button]
         coin_col.append(row)
@@ -201,7 +214,7 @@ if __name__ == "__main__":
     select_col = []
     select_col.append([sg.Text("SELECT ITEM", font=("Helvetica", 24))])
     for item in VendingMachine.PRODUCTS:
-        log(item)
+        #log(item)
         button = sg.Button(item, font=("Helvetica", 18))
         row = [button]
         select_col.append(row)
@@ -226,9 +239,9 @@ if __name__ == "__main__":
     vending.go_to_state('waiting')
 
    # Checks if being used on Pi
-    #if hardware_present: # I will keep this commented out until I work on the PI
+    if hardware_present:
         # Set up the hardware button callback (do not use () after function!) 
-        #key1.when_pressed = vending.button_action
+        key1.when_pressed = vending.button_action
 
     # The Event Loop: begin continuous processing of events
     # The window.read() function reads events and values from the GUI.
@@ -246,7 +259,4 @@ if __name__ == "__main__":
         vending.update()
 
     window.close()
-    print("Normal exit")
-
-    window.close()
-    print("Normal exit")
+    print("Shutting down…")
