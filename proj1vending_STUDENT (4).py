@@ -1,12 +1,15 @@
 # Dylan Brett (100933134)
 # TPRG-2131-02
-# Nov 12, 2024
+# Nov 15, 2024
 # This program is strictly my own work. Any material
 # beyond course learning materials that is taken from
 # the Web or other sources is properly cited, giving
 # credit to the original author(s). I havent used any
 # code from other sources other than referncing the course material
-# 
+#
+#code idea for using RPi (Linux) or PC (Windows)
+# https://stackoverflow.com/questions/4553129/when-to-use-os-name-sys-platform-or-platform-system
+
 # Louis Bertrand
 # Oct 4, 2021 - initial version
 # Nov 17, 2022 - Updated for Fall 2022.
@@ -21,6 +24,8 @@
 # https://pysimplegui.readthedocs.io/en/latest/cookbook/#asynchronous-window-with-periodic-update
 
 import PySimpleGUI as sg
+import platform
+import time
 
 
 # Hardware interface module
@@ -30,18 +35,18 @@ import PySimpleGUI as sg
 
 #Where am I?
 hardware_present = False
-answer = input('is  this on a RPi? ') # temporary method while I figure something else out (gpiozero won't let the program run without the PI)
-if answer == 'yes':
+if platform.system() == 'Linux':
     try:
         from gpiozero import Button, Servo
         servo = Servo(17)
         key1 = Button(5)
         hardware_present = True
+        servo.value = -1 # start the servo in the closed state
     except ModuleNotFoundError:
         print("Not on a Raspberry Pi or gpiozero not installed.")
-else:
-    print('do nothing') # added for testing purposes
-    
+# else:
+#     print('do nothing')
+
 # Setting this constant to True enables the logging function
 # Set it to False for normal operation
 TESTING = True
@@ -61,8 +66,7 @@ def log(s):
 
 
 class VendingMachine(object):
-
-    # a list of my products to be used in the layout in the main program
+    
     PRODUCTS = {"suprise($0.05)": ("SURPRISE", 5),
                 "chocolate($0.75)": ("chocolate", 75),
                 "chips($1)": ("chips", 100),
@@ -92,7 +96,7 @@ class VendingMachine(object):
         for k in self.COINS:
             values.append(self.COINS[k][1])
         self.coin_values = sorted(values, reverse=True)
-        log(str(self.coin_values))
+        #log(str(self.coin_values))
 
     def add_state(self, state):
         self.states[state.name] = state
@@ -144,6 +148,10 @@ class WaitingState(State):
         if machine.event in machine.COINS:
             machine.add_coin(machine.event)
             machine.go_to_state('add_coins')
+            
+            #makes sure the servo is closed when the next person tries to use the vending machine
+            if platform.system() == 'Linux':
+                servo.value = -1
 
 # Additional coins, until a product button is pressed
 class AddCoinsState(State):
@@ -168,10 +176,9 @@ class DeliverProductState(State):
         # Deliver the product and change state
         machine.change_due = machine.amount - machine.PRODUCTS[machine.event][1]
         machine.amount = 0
-        
-        print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
-        
-        if answer == 'yes':
+        if platform.system() == 'Windows':
+            print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
+        if platform.system() == 'Linux':
             servo.value = 1
             time.sleep(10)
             servo.value = -1
@@ -240,7 +247,7 @@ if __name__ == "__main__":
 
    # Checks if being used on Pi
     if hardware_present:
-        # Set up the hardware button callback (do not use () after function!) 
+        # Set up the hardware button callback (do not use () after function!)
         key1.when_pressed = vending.button_action
 
     # The Event Loop: begin continuous processing of events
@@ -251,8 +258,8 @@ if __name__ == "__main__":
     # main portion of the main program.
     while True:
         event, values = window.read(timeout=10)
-        if event != '__TIMEOUT__':
-            log((event, values))
+        #if event != '__TIMEOUT__':
+            #log((event, values))
         if event in (sg.WIN_CLOSED, 'Exit'):
             break
         vending.event = event
