@@ -8,7 +8,7 @@
 # code from other sources other than referncing the course material
 #
 """
-For the 'vending_machine_graphical_DB.py' script - WORKS
+For the 'vending_machine_graphical.py' script - WORKS
 """
 
 from vending_machine_graphical_DB import VendingMachine, WaitingState, AddCoinsState, DeliverProductState, CountChangeState
@@ -16,7 +16,8 @@ from vending_machine_graphical_DB import VendingMachine, WaitingState, AddCoinsS
 def test_VendingMachine():
     # new machine object
     vending = VendingMachine()
-    #Adding the states
+
+    # Add the states
     vending.add_state(WaitingState())
     vending.add_state(AddCoinsState())
     vending.add_state(DeliverProductState())
@@ -27,28 +28,49 @@ def test_VendingMachine():
     vending.go_to_state('waiting')
     assert vending.state.name == 'waiting'
 
-    # test that the first coin causes a transition to 'coins' and test each coin
-    vending.event = '5' # a nicle
+    # test that the first coin causes a transition to 'coins'
+    
+    vending.event = '5'# a nicle
+    vending.amount = 0
+    vending.go_to_state('waiting')
     vending.update()
     assert vending.state.name == 'add_coins'
     assert vending.amount == 5 # pennies, was .total
+#     vending.amount = 0
+#     vending.update()
+    #vending.go_to_state('waiting')
     
     vending.event = '10' # a dime
+    vending.amount = 0
+    vending.go_to_state('waiting')
     vending.update()
     assert vending.state.name == 'add_coins'
     assert vending.amount == 10 # pennies, was .total
+#     vending.amount = 0
+#     vending.update()
+    #vending.go_to_state('waiting')
     
     vending.event = '25' # a quarter
+    vending.amount = 0
+    vending.go_to_state('waiting')
     vending.update()
     assert vending.state.name == 'add_coins'
     assert vending.amount == 25 # pennies, was .total
+#     vending.amount = 0
+#     vending.update()
     
     vending.event = '100' # a loonie
+    vending.amount = 0
+    vending.go_to_state('waiting')
     vending.update()
     assert vending.state.name == 'add_coins'
     assert vending.amount == 100 # pennies, was .total
+#     vending.amount = 0
+#     vending.update()
     
     vending.event = '200' # a twonie
+    vending.amount = 0
+    vending.go_to_state('waiting')
     vending.update()
     assert vending.state.name == 'add_coins'
     assert vending.amount == 200 # pennies, was .total
