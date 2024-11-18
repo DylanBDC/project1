@@ -1,13 +1,13 @@
 # Dylan Brett (100933134)
 # TPRG-2131-02
-# Nov 15, 2024
+# Nov 17, 2024
 # This program is strictly my own work. Any material
 # beyond course learning materials that is taken from
 # the Web or other sources is properly cited, giving
 # credit to the original author(s). I havent used any
 # code from other sources other than referncing the course material
 #
-#code idea for using RPi (Linux) or PC (Windows)
+#code idea for using RPi (Linux) or PC (Windows) (I am assuming you dont have GPIO zero on your PC but if you do it will not let the code run so I have added this)
 # https://stackoverflow.com/questions/4553129/when-to-use-os-name-sys-platform-or-platform-system
 
 # Louis Bertrand
@@ -35,7 +35,8 @@ import time
 
 #Where am I?
 hardware_present = False
-if platform.system() == 'Linux':
+
+if platform.system() == 'Linux':    
     try:
         from gpiozero import Button, Servo
         servo = Servo(17)
@@ -44,8 +45,8 @@ if platform.system() == 'Linux':
         servo.value = -1 # start the servo in the closed state
     except ModuleNotFoundError:
         print("Not on a Raspberry Pi or gpiozero not installed.")
-# else:
-#     print('do nothing')
+#     else:
+#         print('do nothing')
 
 # Setting this constant to True enables the logging function
 # Set it to False for normal operation
@@ -76,11 +77,11 @@ class VendingMachine(object):
                 }
 
     # List of coins: each tuple is ("VALUE", value in cents)
-    COINS = {"$0.05": ("5", 5),
-             "$0.10": ("10", 10),
-             "$0.25": ("25", 25),
-             "$1": ("100", 100),
-             "$2": ("200", 200)
+    COINS = {"5": ("5", 5),
+             "10": ("10", 10),
+             "25": ("25", 25),
+             "100": ("100", 100),
+             "200": ("200", 200)
 
             }
 
@@ -168,6 +169,7 @@ class AddCoinsState(State):
                 machine.go_to_state('deliver_product')
         else:
             pass  # else ignore the event, not enough money for product
+        
 
 # Print the product being delivered
 class DeliverProductState(State):
@@ -176,12 +178,16 @@ class DeliverProductState(State):
         # Deliver the product and change state
         machine.change_due = machine.amount - machine.PRODUCTS[machine.event][1]
         machine.amount = 0
+        # only print if the program is on a windows computer
         if platform.system() == 'Windows':
             print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
-        if platform.system() == 'Linux':
+        # check to see if a servo is connected 
+        try:    
             servo.value = 1
             time.sleep(10)
             servo.value = -1
+        except:
+             print('') # make a space after the product is delivered
         
         if machine.change_due > 0:
             machine.go_to_state('count_change')
@@ -207,11 +213,13 @@ class CountChangeState(State):
 
 # MAIN PROGRAM
 if __name__ == "__main__":
+    
+    
     #define the GUI
     sg.theme('BluePurple')    # Keep things interesting for your users
 
     coin_col = []
-    coin_col.append([sg.Text("ENTER COINS", font=("Helvetica", 24))])
+    coin_col.append([sg.Text("ENTER COINS (\u00A2)", font=("Helvetica", 24))])
     for item in VendingMachine.COINS:
         #log(item)
         button = sg.Button(item, font=("Helvetica", 18))
@@ -231,6 +239,7 @@ if __name__ == "__main__":
                      sg.Column(select_col, vertical_alignment="TOP")
                     ] ]
     layout.append([sg.Button("RETURN", font=("Helvetica", 12))])
+    #layout.append([sg.Text("Amount = ", machine.amount, font=("Helvetica", 12))])
     window = sg.Window('Vending Machine', layout)
 
     # new machine object
@@ -258,7 +267,9 @@ if __name__ == "__main__":
     # main portion of the main program.
     while True:
         event, values = window.read(timeout=10)
-        #if event != '__TIMEOUT__':
+        
+        if event == '__TIMEOUT__':
+            pass
             #log((event, values))
         if event in (sg.WIN_CLOSED, 'Exit'):
             break
