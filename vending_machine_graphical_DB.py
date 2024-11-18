@@ -45,8 +45,6 @@ if platform.system() == 'Linux':
         servo.value = -1 # start the servo in the closed state
     except ModuleNotFoundError:
         print("Not on a Raspberry Pi or gpiozero not installed.")
-#     else:
-#         print('do nothing')
 
 # Setting this constant to True enables the logging function
 # Set it to False for normal operation
@@ -54,7 +52,9 @@ TESTING = True
 
 # Print a debug log string if TESTING is True, ensure use of Docstring, in definition
 def log(s):
-    
+    """
+    adds Logs if testing mode is enabled.
+    """
     if TESTING:
         print(s)
 
@@ -67,7 +67,9 @@ def log(s):
 
 
 class VendingMachine(object):
-    
+    """
+    A state machine to simulate a vending machine's behavior.
+    """
     PRODUCTS = {"suprise($0.05)": ("SURPRISE", 5),
                 "chocolate($0.75)": ("chocolate", 75),
                 "chips($1)": ("chips", 100),
@@ -87,6 +89,9 @@ class VendingMachine(object):
 
 
     def __init__(self):
+        """
+        Initializes the vending machine with default state and properties.
+        """
         self.state = None  # current state
         self.states = {}  # dictionary of states
         self.event = ""  # no event detected
@@ -97,12 +102,18 @@ class VendingMachine(object):
         for k in self.COINS:
             values.append(self.COINS[k][1])
         self.coin_values = sorted(values, reverse=True)
-        #log(str(self.coin_values))
+        log(str(self.coin_values))
 
     def add_state(self, state):
+        """
+        Adds a state to the state machine.
+        """
         self.states[state.name] = state
 
     def go_to_state(self, state_name):
+        """
+        Transitions to a specified state.
+        """
         if self.state:
             log('Exiting %s' % (self.state.name))
             self.state.on_exit(self)
@@ -111,8 +122,11 @@ class VendingMachine(object):
         self.state.on_entry(self)
 
     def update(self):
+        """
+        Updates the state machine based on the current state and event.
+        """
         if self.state:
-            #log('Updating %s' % (self.state.name))
+            log('Updating %s' % (self.state.name))
             self.state.update(self)
 
     def add_coin(self, coin):
@@ -144,6 +158,9 @@ class State(object):
 
 # In the waiting state, the machine waits for the first coin
 class WaitingState(State):
+    """
+    State where the machine waits for the first coin.
+    """
     _NAME = "waiting"
     def update(self, machine):
         if machine.event in machine.COINS:
@@ -156,6 +173,9 @@ class WaitingState(State):
 
 # Additional coins, until a product button is pressed
 class AddCoinsState(State):
+    """
+    State where additional coins are accepted until a product is selected.
+    """
     _NAME = "add_coins"
     def update(self, machine):
         if machine.event == "RETURN":
@@ -173,6 +193,9 @@ class AddCoinsState(State):
 
 # Print the product being delivered
 class DeliverProductState(State):
+    """
+    State where the selected product is delivered.
+    """
     _NAME = "deliver_product"
     def on_entry(self, machine):
         # Deliver the product and change state
@@ -181,7 +204,7 @@ class DeliverProductState(State):
         # only print if the program is on a windows computer
         if platform.system() == 'Windows':
             print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
-        # check to see if a servo is connected 
+        # check to see if a servo is connected (if a servo isn't being used it will add a space)
         try:    
             servo.value = 1
             time.sleep(10)
@@ -196,6 +219,9 @@ class DeliverProductState(State):
 
 # Count out the change in coins 
 class CountChangeState(State):
+    """
+    State where the machine counts and returns change.
+    """
     _NAME = "count_change"
     def on_entry(self, machine):
         # Return the change due and change state
@@ -221,7 +247,7 @@ if __name__ == "__main__":
     coin_col = []
     coin_col.append([sg.Text("ENTER COINS (\u00A2)", font=("Helvetica", 24))])
     for item in VendingMachine.COINS:
-        #log(item)
+        log(item)
         button = sg.Button(item, font=("Helvetica", 18))
         row = [button]
         coin_col.append(row)
@@ -229,7 +255,7 @@ if __name__ == "__main__":
     select_col = []
     select_col.append([sg.Text("SELECT ITEM", font=("Helvetica", 24))])
     for item in VendingMachine.PRODUCTS:
-        #log(item)
+        log(item)
         button = sg.Button(item, font=("Helvetica", 18))
         row = [button]
         select_col.append(row)
