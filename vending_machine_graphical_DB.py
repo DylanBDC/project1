@@ -36,7 +36,7 @@ import time
 #Where am I?
 hardware_present = False
 
-if platform.system() == 'Linux':    
+if platform.system() == 'Linux': # only run gpiozero when on a Linux system    
     try:
         from gpiozero import Button, Servo
         servo = Servo(17)
@@ -48,12 +48,12 @@ if platform.system() == 'Linux':
 
 # Setting this constant to True enables the logging function
 # Set it to False for normal operation
-TESTING = True
+TESTING = False
 
 # Print a debug log string if TESTING is True, ensure use of Docstring, in definition
 def log(s):
     """
-    adds Logs if testing mode is enabled.
+    adds Logs if testing mode is enabled.(True)
     """
     if TESTING:
         print(s)
@@ -70,7 +70,7 @@ class VendingMachine(object):
     """
     A state machine to simulate a vending machine's behavior.
     """
-    PRODUCTS = {"suprise($0.05)": ("SURPRISE", 5),
+    PRODUCTS = {"suprise($0.05)": ("SURPRISE", 5), #products added to the vending machine
                 "chocolate($0.75)": ("chocolate", 75),
                 "chips($1)": ("chips", 100),
                 "cookie($1.25)": ("cookie", 125),
@@ -79,7 +79,8 @@ class VendingMachine(object):
                 }
 
     # List of coins: each tuple is ("VALUE", value in cents)
-    COINS = {"5": ("5", 5),
+    
+    COINS = {"5": ("5", 5), # coins added to the vending machine
              "10": ("10", 10),
              "25": ("25", 25),
              "100": ("100", 100),
@@ -204,13 +205,13 @@ class DeliverProductState(State):
         # only print if the program is on a windows computer
         if platform.system() == 'Windows':
             print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
-        # check to see if a servo is connected (if a servo isn't being used it will add a space)
+        # check to see if a servo is connected (if a servo isn't being used it will display a message)
         try:    
             servo.value = 1
             time.sleep(10)
             servo.value = -1
         except:
-             print('') # make a space after the product is delivered
+             print('no servo') # display a message after the product is delivered
         
         if machine.change_due > 0:
             machine.go_to_state('count_change')
