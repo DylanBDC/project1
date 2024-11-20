@@ -1,9 +1,15 @@
-#!/usr/bin/env python3
+# Dylan Brett (100933134)
+# TPRG-2131-02
+# Nov 17, 2024
+# This program is strictly my own work. Any material
+# beyond course learning materials that is taken from
+# the Web or other sources is properly cited, giving
+# credit to the original author(s). I havent used any
+# code from other sources other than referncing the course material
+#
+#code idea for using RPi (Linux) or PC (Windows) (I am assuming you dont have GPIO zero on your PC but if you do it will not let the code run so I have added this)
+# https://stackoverflow.com/questions/4553129/when-to-use-os-name-sys-platform-or-platform-system
 
-# STUDENT version for Project 1.
-# TPRG2131 Fall 202x
-# Updated Phil J (Fall 202x)
-# 
 # Louis Bertrand
 # Oct 4, 2021 - initial version
 # Nov 17, 2022 - Updated for Fall 2022.
@@ -18,6 +24,8 @@
 # https://pysimplegui.readthedocs.io/en/latest/cookbook/#asynchronous-window-with-periodic-update
 
 import PySimpleGUI as sg
+import platform
+import time
 
 
 # Hardware interface module
@@ -27,19 +35,26 @@ import PySimpleGUI as sg
 
 #Where am I?
 hardware_present = False
-try:
-    #*** define the pin you used
-    hardware_present = True
-except ModuleNotFoundError:
-    print("Not on a Raspberry Pi or gpiozero not installed.")
+
+if platform.system() == 'Linux': # only run gpiozero when on a Linux system    
+    try:
+        from gpiozero import Button, Servo
+        servo = Servo(17)
+        key1 = Button(5)
+        hardware_present = True
+        servo.value = -1 # start the servo in the closed state
+    except ModuleNotFoundError:
+        print("Not on a Raspberry Pi or gpiozero not installed.")
 
 # Setting this constant to True enables the logging function
 # Set it to False for normal operation
-TESTING = True
+TESTING = False
 
 # Print a debug log string if TESTING is True, ensure use of Docstring, in definition
 def log(s):
-    
+    """
+    adds Logs if testing mode is enabled.(True)
+    """
     if TESTING:
         print(s)
 
@@ -48,19 +63,36 @@ def log(s):
 # that "belongs to" the state machine. In this case, the information
 # is the products and prices, and the coins inserted and change due.
 # For testing purposes, output is to stdout, also ensure use of Docstring, in class
+
+
+
 class VendingMachine(object):
-    
-    PRODUCTS = {"suprise": ("SURPRISE", 5),
+    """
+    A state machine to simulate a vending machine's behavior.
+    """
+    PRODUCTS = {"suprise($0.05)": ("SURPRISE", 5), #products added to the vending machine
+                "chocolate($0.75)": ("chocolate", 75),
+                "chips($1)": ("chips", 100),
+                "cookie($1.25)": ("cookie", 125),
+                "pop($1.50)": ("pop", 150)
 
                 }
 
     # List of coins: each tuple is ("VALUE", value in cents)
-    COINS = {"5": ("5", 5),
+    
+    COINS = {"5": ("5", 5), # coins added to the vending machine
+             "10": ("10", 10),
+             "25": ("25", 25),
+             "100": ("100", 100),
+             "200": ("200", 200)
 
             }
 
 
     def __init__(self):
+        """
+        Initializes the vending machine with default state and properties.
+        """
         self.state = None  # current state
         self.states = {}  # dictionary of states
         self.event = ""  # no event detected
@@ -74,9 +106,15 @@ class VendingMachine(object):
         log(str(self.coin_values))
 
     def add_state(self, state):
+        """
+        Adds a state to the state machine.
+        """
         self.states[state.name] = state
 
     def go_to_state(self, state_name):
+        """
+        Transitions to a specified state.
+        """
         if self.state:
             log('Exiting %s' % (self.state.name))
             self.state.on_exit(self)
@@ -85,8 +123,11 @@ class VendingMachine(object):
         self.state.on_entry(self)
 
     def update(self):
+        """
+        Updates the state machine based on the current state and event.
+        """
         if self.state:
-            #log('Updating %s' % (self.state.name))
+            log('Updating %s' % (self.state.name))
             self.state.update(self)
 
     def add_coin(self, coin):
@@ -118,14 +159,24 @@ class State(object):
 
 # In the waiting state, the machine waits for the first coin
 class WaitingState(State):
+    """
+    State where the machine waits for the first coin.
+    """
     _NAME = "waiting"
     def update(self, machine):
         if machine.event in machine.COINS:
             machine.add_coin(machine.event)
             machine.go_to_state('add_coins')
+            
+            #makes sure the servo is closed when the next person tries to use the vending machine
+            if platform.system() == 'Linux':
+                servo.value = -1
 
 # Additional coins, until a product button is pressed
 class AddCoinsState(State):
+    """
+    State where additional coins are accepted until a product is selected.
+    """
     _NAME = "add_coins"
     def update(self, machine):
         if machine.event == "RETURN":
@@ -139,15 +190,29 @@ class AddCoinsState(State):
                 machine.go_to_state('deliver_product')
         else:
             pass  # else ignore the event, not enough money for product
+        
 
 # Print the product being delivered
 class DeliverProductState(State):
+    """
+    State where the selected product is delivered.
+    """
     _NAME = "deliver_product"
     def on_entry(self, machine):
         # Deliver the product and change state
         machine.change_due = machine.amount - machine.PRODUCTS[machine.event][1]
         machine.amount = 0
-        print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
+        # only print if the program is on a windows computer
+        if platform.system() == 'Windows':
+            print("Buzz... Whir... Click...", machine.PRODUCTS[machine.event][0])
+        # check to see if a servo is connected (if a servo isn't being used it will display a message)
+        try:    
+            servo.value = 1
+            time.sleep(10)
+            servo.value = -1
+        except:
+             print('no servo') # display a message after the product is delivered
+        
         if machine.change_due > 0:
             machine.go_to_state('count_change')
         else:
@@ -155,6 +220,9 @@ class DeliverProductState(State):
 
 # Count out the change in coins 
 class CountChangeState(State):
+    """
+    State where the machine counts and returns change.
+    """
     _NAME = "count_change"
     def on_entry(self, machine):
         # Return the change due and change state
@@ -172,11 +240,13 @@ class CountChangeState(State):
 
 # MAIN PROGRAM
 if __name__ == "__main__":
+    
+    
     #define the GUI
     sg.theme('BluePurple')    # Keep things interesting for your users
 
     coin_col = []
-    coin_col.append([sg.Text("ENTER COINS", font=("Helvetica", 24))])
+    coin_col.append([sg.Text("ENTER COINS (\u00A2)", font=("Helvetica", 24))])
     for item in VendingMachine.COINS:
         log(item)
         button = sg.Button(item, font=("Helvetica", 18))
@@ -196,6 +266,7 @@ if __name__ == "__main__":
                      sg.Column(select_col, vertical_alignment="TOP")
                     ] ]
     layout.append([sg.Button("RETURN", font=("Helvetica", 12))])
+    #layout.append([sg.Text("Amount = ", machine.amount, font=("Helvetica", 12))])
     window = sg.Window('Vending Machine', layout)
 
     # new machine object
@@ -223,12 +294,14 @@ if __name__ == "__main__":
     # main portion of the main program.
     while True:
         event, values = window.read(timeout=10)
-        if event != '__TIMEOUT__':
-            log((event, values))
+        
+        if event == '__TIMEOUT__':
+            pass
+            #log((event, values))
         if event in (sg.WIN_CLOSED, 'Exit'):
             break
         vending.event = event
         vending.update()
 
     window.close()
-    print("Normal exit")
+    print("Shutting down…")
